@@ -69,6 +69,9 @@ private:
 	void RobotInit()
 	{
 
+		//Starting Camera Server
+		CameraServer::GetInstance()->StartAutomaticCapture();
+
 		//Declaring sparks for drive code
 		frontLeft = new Spark(0);
 		rearLeft = new Spark(1);
