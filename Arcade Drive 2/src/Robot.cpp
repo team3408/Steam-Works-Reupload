@@ -11,14 +11,6 @@ class Robot: public IterativeRobot
 private:
 	/*
 	LiveWindow *lw = LiveWindow::GetInstance();
-
-	std::unique_ptr<frc::Command> autonomousCommand;
-	frc::SendableChooser<frc::Command*> chooser;
-
-	SendableChooser *Chooser;
-	const std::string autoNameDefault = "Default";
-	const std::string autoNameCustom = "My Auto";
-	std::string autoSelected;
 	*/
 
 	// Conrtollers and Sparks
@@ -65,13 +57,14 @@ private:
 	string Center = "c";
 	string humanInput;
 
+	bool leftMode;
+	bool rightMode;
+	bool centerMode;
+
 
 	void RobotInit()
 	{
-
-		//Starting Camera Server
 		CameraServer::GetInstance()->StartAutomaticCapture();
-
 		//Declaring sparks for drive code
 		frontLeft = new Spark(0);
 		rearLeft = new Spark(1);
@@ -100,12 +93,20 @@ private:
 		myDrive = new RobotDrive(frontLeft, rearLeft, rearRight, frontRight);
 
 		//Asks the driver which auto mode they would like to run
-		cout << "Which auto sir or madam do you want to do?";
-		cin >> humanInput;//input option are r,l,c
+		//cout << "Which auto sir or madam do you want to do?";
+		//cin >> humanInput;//input option are r,l,c
+
+
+		/*
+		bool buttonValue1 = SmartDashboard::SetDefaultBoolean("DB/Button1", false);
+		bool buttonValue2 = SmartDashboard::SetDefaultBoolean("DB/Button2", false);
+		bool buttonValue3 = SmartDashboard::SetDefaultBoolean("DB/Button3", false);
+		*/
+
 
 		///<inversion code>
-		//rearLeft->SetInverted(true);
-		//frontLeft->SetInverted(true);
+		rearLeft->SetInverted(true);
+		frontLeft->SetInverted(true);
 	}
 	/**
 	 * This autonomous (along with the chooser code above) shows how to select between different autonomous modes
@@ -118,6 +119,29 @@ private:
 	 */
 	void AutonomousInit()
 	{
+		bool buttonValue1 = SmartDashboard::GetBoolean("DB/Button 1",true);
+		bool buttonValue2 = SmartDashboard::GetBoolean("DB/Button 2",false);
+		bool buttonValue3 = SmartDashboard::GetBoolean("DB/Button 3",true);
+
+		if(buttonValue1)
+			{
+				leftMode = true;
+			}
+		else if(buttonValue2)
+			{
+				rightMode = true;
+			}
+		else if(buttonValue3)
+			{
+				centerMode = true;
+			}
+		else
+		{
+			leftMode = false;
+			rightMode = false;
+			centerMode = false;
+		}
+
 		//sets gyro up
 		gyro->Reset();
 		gyro->Calibrate();
@@ -126,7 +150,7 @@ private:
 		//angleMeasurement = angleMeasurement/360;
 		SmartDashboard::PutNumber("Gyro Angle", angleMeasurement);
 
-		// Setting/Resetting encoder
+		// Setting/Resetting
 		revolutions = 0;
 
 		//ensure auto mode is ready to be run
@@ -141,9 +165,11 @@ private:
 	void AutonomousPeriodic()
 	{
 		//runs left side autonomous
-		if(humanInput == "l","L")
+		//if(humanInput == "l","L")
+		if(leftMode)
 		{
 			// Encoder gets value
+
 			revolutions = robotDistance -> GetDistance();
 
 			if (revolutions < 4.2)
@@ -151,7 +177,6 @@ private:
 				//drives at half speed straight forward
 				myDrive -> ArcadeDrive(0.0,0.5);
 			}
-
 			else if (revolutions >= 4.2 && revolutions <= 8.23)
 			{
 				//turns 30 degrees right
@@ -163,7 +188,6 @@ private:
 				//checks rotations
 				revolutions = robotDistance -> GetDistance();
 			}
-
 			else
 			{
 				//stops robot at 8.23 total revolutions
@@ -171,7 +195,7 @@ private:
 			}
 		}
 		//runs the right side of autonomous
-		else if(humanInput == "r", "R")
+		if(rightMode)
 		{
 			// Encoder gets value
 			revolutions = robotDistance -> GetDistance();
@@ -201,7 +225,8 @@ private:
 			}
 		}
 
-		else
+		if(centerMode)
+
 			{
 				// HasPeriodPassed returns true once so we need an extra if.
 				if(autotimer->HasPeriodPassed(3.5))
@@ -268,7 +293,7 @@ private:
 			revolutions = robotDistance -> GetDistance();
 			if (revolutions > 4.03)
 			{
-				myDrive->ArcadeDrive(30,0.0);
+				myDrive.ArcadeDrive(30,0.0);
 			}
 
 
@@ -278,6 +303,7 @@ private:
 	}
 	void TeleopInit()
 	{
+
 
 	}
 	void TeleopPeriodic()
