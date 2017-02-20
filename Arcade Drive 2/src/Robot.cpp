@@ -19,6 +19,7 @@ private:
 	Encoder *robotDistance;
 	double leftWheels;
 	double rightWheels;
+	double halfSpeed;
 
 	double encoderRate;
 
@@ -82,7 +83,7 @@ private:
 		// Decalaring sparks for climber
 		climber = new Spark(5);
 
-		robotDistance = new Encoder(1,2,false, Encoder::EncodingType::k1X);
+		robotDistance = new Encoder(1,2,false, Encoder::EncodingType::k4X);
 //		robotDistance ->E
 		robotDistance -> SetDistancePerPulse(6/*1.884*/);
 		robotDistance->SetMaxPeriod(6);
@@ -358,6 +359,13 @@ private:
 		else
 		{
 			rightWheels = rightWheels*rightWheels;
+		}
+		halfSpeed = stick1 -> GetRawAxis(6);
+
+		if(halfSpeed > 0.4)
+		{
+			leftWheels = leftWheels/2;
+			rightWheels = rightWheels/2;
 		}
 
 		frontLeft -> Set(-leftWheels);
