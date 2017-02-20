@@ -20,6 +20,8 @@ private:
 	double leftWheels;
 	double rightWheels;
 
+	double encoderRate;
+
 	// Shooter's ON/OFF
 	bool spinWheel;
 
@@ -40,6 +42,8 @@ private:
 	// Timer
 	Timer *autotimer;
 	double stopTime;
+	double time;
+	bool my_variable= true;//don't delete
 
 	// Storing values from gyro
 	double angleMeasurement;
@@ -48,7 +52,7 @@ private:
 	RobotDrive *myDrive;
 
 	// Camera Code
-	// CameraServer *camera;
+	CameraServer *camera;
 
 	// String auto chooser code
 	Command *autoChooser;
@@ -78,6 +82,13 @@ private:
 		// Decalaring sparks for climber
 		climber = new Spark(5);
 
+		robotDistance = new Encoder(1,2,false, Encoder::EncodingType::k1X);
+//		robotDistance ->E
+		robotDistance -> SetDistancePerPulse(6/*1.884*/);
+		robotDistance->SetMaxPeriod(6);
+		robotDistance->SetMinRate(0);
+		robotDistance->SetSamplesToAverage(7);
+
 
 		// Declaring controllers
 		stick1 = new Joystick(0); // Port zero
@@ -87,7 +98,9 @@ private:
 		autotimer = new Timer();
 		stopTime = 5;
 
-		gyro = new AnalogGyro(0);
+		gyro = new AnalogGyro(6);
+
+		gyro->InitGyro();
 
 		//Sets Up auto drive
 		myDrive = new RobotDrive(frontLeft, rearLeft, rearRight, frontRight);
@@ -103,10 +116,14 @@ private:
 		bool buttonValue3 = SmartDashboard::SetDefaultBoolean("DB/Button3", false);
 		*/
 
+		//Do not invert motors Arcade drive inverts it for you
 
-		///<inversion code>
+		///<inversion code>/*
 		rearLeft->SetInverted(true);
 		frontLeft->SetInverted(true);
+		rearRight ->SetInverted(true);
+		frontRight ->SetInverted(true);*/
+
 	}
 	/**
 	 * This autonomous (along with the chooser code above) shows how to select between different autonomous modes
@@ -119,20 +136,26 @@ private:
 	 */
 	void AutonomousInit()
 	{
-		bool buttonValue1 = SmartDashboard::GetBoolean("DB/Button 1",true);
-		bool buttonValue2 = SmartDashboard::GetBoolean("DB/Button 2",false);
-		bool buttonValue3 = SmartDashboard::GetBoolean("DB/Button 3",true);
+		bool buttonValue1 = SmartDashboard::GetBoolean("leftMode",false);
+		bool buttonValue2 = SmartDashboard::GetBoolean("rightMode",false);
+		bool buttonValue3 = SmartDashboard::GetBoolean("centerMode",false);
 
 		if(buttonValue1)
 			{
 				leftMode = true;
+				rightMode = false;
+				centerMode = false;
 			}
 		else if(buttonValue2)
 			{
+				leftMode = false;
 				rightMode = true;
+				centerMode = false;
 			}
 		else if(buttonValue3)
 			{
+				leftMode = false;
+				rightMode = false;
 				centerMode = true;
 			}
 		else
@@ -148,9 +171,10 @@ private:
 		//resets angle measurement to 0
 		angleMeasurement = gyro->GetAngle();
 		//angleMeasurement = angleMeasurement/360;
-		SmartDashboard::PutNumber("Gyro Angle", angleMeasurement);
+		SmartDashboard::PutNumber("Gyro Angle: ", angleMeasurement);
 
-		// Setting/Resetting
+		robotDistance->Reset();
+		// Setting/Resetting to 0
 		revolutions = 0;
 
 		//ensure auto mode is ready to be run
@@ -160,6 +184,7 @@ private:
 		//begins timing autonomous
 		autotimer->Reset();
 		autotimer->Start();
+
 	}
 
 	void AutonomousPeriodic()
@@ -169,29 +194,33 @@ private:
 		if(leftMode)
 		{
 			// Encoder gets value
-
 			revolutions = robotDistance -> GetDistance();
-
-			if (revolutions < 4.2)
+			encoderRate = robotDistance -> GetRate();
+			SmartDashboard::PutNumber("Distance (inches): ",revolutions);
+			SmartDashboard::PutNumber("RPM: ",encoderRate);
+			angleMeasurement = gyro->GetAngle();
+			if (revolutions < 13.194689)
 			{
 				//drives at half speed straight forward
-				myDrive -> ArcadeDrive(0.0,0.5);
+				myDrive -> ArcadeDrive(0.5,0.0);
 			}
-			else if (revolutions >= 4.2 && revolutions <= 8.23)
+			else if (revolutions >= 13.194689 && revolutions <= 25.855307)
 			{
 				//turns 30 degrees right
-				myDrive->ArcadeDrive(30,0.0);
-				//waits .5 secoonds
-				Wait(0.5);
-				//drives at 30 degrees at half speed
-				myDrive->ArcadeDrive(30,0.5);
-				//checks rotations
-				revolutions = robotDistance -> GetDistance();
+
+				myDrive->ArcadeDrive(0.0,0.5);
+				//don't use wait in loop. It thinks motors are off.
+
+				if(angleMeasurement >27)
+				{
+					myDrive->ArcadeDrive(0.5,0.0);
+				}
+
 			}
 			else
 			{
 				//stops robot at 8.23 total revolutions
-				myDrive->ArcadeDrive(30,0.0);
+				myDrive->ArcadeDrive(0.0,0.0);
 			}
 		}
 		//runs the right side of autonomous
@@ -200,20 +229,20 @@ private:
 			// Encoder gets value
 			revolutions = robotDistance -> GetDistance();
 
-			if (revolutions < 4.2)
+			if (revolutions < 13.194689)
 			{
 				//drives at half speed straight forward
-				myDrive -> ArcadeDrive(0.0,0.5);
+				myDrive -> ArcadeDrive(.083,0.5);
 			}
 
-			else if (revolutions >= 4.2 && revolutions <= 8.23)
+			else if (revolutions >= 13.194689 && revolutions <= 25.855307)
 			{
-				//turns -30 (330) degrees right
-				myDrive->ArcadeDrive(-30,0.0);
+				//turns -30 (330) degrees left
+				myDrive->ArcadeDrive(-.083,0.0);
 				//waits .5 secoonds
 				Wait(0.5);
 				//drives at -30 (330) degrees at half speed
-				myDrive->ArcadeDrive(-30,0.5);
+				myDrive->ArcadeDrive(-.083,0.5);
 				//checks rotations
 				revolutions = robotDistance -> GetDistance();
 			}
@@ -221,7 +250,7 @@ private:
 			else
 			{
 				//stops robot at 8.23 total revolutions
-				myDrive->ArcadeDrive(30,0.0);
+				myDrive->ArcadeDrive(-.083,0.0);
 			}
 		}
 
@@ -229,7 +258,7 @@ private:
 
 			{
 				// HasPeriodPassed returns true once so we need an extra if.
-				if(autotimer->HasPeriodPassed(3.5))
+				if(autotimer->HasPeriodPassed(100))
 				{
 					myDrive->ArcadeDrive(0.0,0.0);
 					// Setting variable so we can test again
@@ -242,11 +271,11 @@ private:
 				else
 				{
 					//myDrive->ArcadeDrive(angleMeasurement, 0.65);
-					myDrive->ArcadeDrive(0, 0.65);
+					myDrive->ArcadeDrive(0.65,0.0);
 				}
 			}
 		angleMeasurement = gyro->GetAngle();
-		SmartDashboard::PutNumber("Gyro Angle", angleMeasurement);
+		SmartDashboard::PutNumber("Gyro Angle: ", angleMeasurement);
 
 
 /*
@@ -311,12 +340,30 @@ private:
 		//angleMeasurement = gyro->GetAngle();
 		//SmartDashboard::PutNumber("Gyro Angle", angleMeasurement);
 		//DRIVE CODE
+
 		leftWheels = stick1 -> GetRawAxis(1); //leftwheels doesnt work
 		rightWheels = stick1 -> GetRawAxis(5);
-		frontLeft -> Set(rightWheels);
-		frontRight -> Set(leftWheels);
-		rearLeft -> Set(rightWheels);
-		rearRight -> Set(leftWheels);
+		if(leftWheels < 0)
+		{
+			leftWheels = -(leftWheels*leftWheels);
+		}
+		else
+		{
+			leftWheels = leftWheels*leftWheels;
+		}
+		if(rightWheels<0)
+		{
+			rightWheels = -(rightWheels*rightWheels);
+		}
+		else
+		{
+			rightWheels = rightWheels*rightWheels;
+		}
+
+		frontLeft -> Set(-leftWheels);
+		frontRight -> Set(rightWheels);
+		rearLeft -> Set(-leftWheels);
+		rearRight -> Set(rightWheels);
 
 		//SHOOTER CODE
 		spinWheel = stick1 -> GetRawButton(1);//Assigned to A button
@@ -337,28 +384,30 @@ private:
 
 		if (climberForwardSpin)
 		{					//if B button pressed
-			climber->Set(1);//Climber gets 100% power
+			climber->Set(1.0);//Climber gets 100% power
 		}
 		else if (climberReverseSpin)
 		{					 //if X button pressed
-			climber->Set(-1);//Climber gets 100% power backwards
+			climber->Set(-1.0);//Climber gets 100% power backwards
 		}
 		else
 		{
-			climber->Set(0);//Otherwise climber gets no power
+			climber->Set(0.0);//Otherwise climber gets no power
 		}
 
 
 /*
 		leftWheels = stick1 -> GetRawAxis(1);
 		rightWheels = stick1 -> GetRawAxis(5);
+		myDrive->ArcadeDrive(leftWheels, rightWheels);*/
+		SmartDashboard::PutNumber("leftWheels: ", leftWheels);
+		SmartDashboard::PutNumber("rightWheels: ", rightWheels);
 
-
-		myDrive->ArcadeDrive(-leftWheels,rightWheels);*/
 	}
 
 	void TestPeriodic()
 	{
+
 	}
 };
 
