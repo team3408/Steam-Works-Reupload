@@ -195,6 +195,25 @@ private:
 		//if(humanInput == "l","L")
 		if(leftMode)
 		{
+			/*switch(revolutions)
+		{
+			case (revolutions< 13.194689):
+				myDrive -> ArcadeDrive(0.5,0.0);
+				break;
+			case(revolutions >= 13.194689 && revolutions <= 25.855307):
+					angleMeasurement = gyro->GetAngle();
+					if(angleMeasurement >27)
+						{
+							myDrive->ArcadeDrive(0.5,0.0);
+						}
+					else
+						{
+							myDrive->ArcadeDrive(0.0,0.5);
+						}
+					break;
+			default:
+				myDrive->ArcadeDrive(0.0,0.0);
+				break;*/
 			// Encoder gets value
 			revolutions = robotDistance -> GetDistance();
 			encoderRate = robotDistance -> GetRate();
