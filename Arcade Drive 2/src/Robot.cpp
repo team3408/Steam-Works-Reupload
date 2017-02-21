@@ -119,7 +119,8 @@ private:
 
 		//Do not invert motors Arcade drive inverts it for you
 
-		///<inversion code>/*
+		///<inversion code>
+		/*
 		rearLeft->SetInverted(true);
 		frontLeft->SetInverted(true);
 		rearRight ->SetInverted(true);
@@ -207,16 +208,16 @@ private:
 			}
 			else if (revolutions >= 13.194689 && revolutions <= 25.855307)
 			{
-				//turns 30 degrees right
-
-				myDrive->ArcadeDrive(0.0,0.5);
-				//don't use wait in loop. It thinks motors are off.
-
+				angleMeasurement = gyro->GetAngle();
+				
 				if(angleMeasurement >27)
 				{
 					myDrive->ArcadeDrive(0.5,0.0);
 				}
-
+				else
+				{
+					myDrive->ArcadeDrive(0.0,0.5);
+				}
 			}
 			else
 			{
