@@ -1,5 +1,6 @@
 #include "WPILib.h"
 #include <Timer.h>
+#include <CanTalonSRX.h>
 #include "SmartDashboard/SmartDashboard.h"
 #include <string>
 using namespace std;
@@ -15,16 +16,16 @@ private:
 
 	// Conrtollers and Sparks
 	Joystick *stick1, *stick2;
-	Spark *rearLeft, *frontLeft, *rearRight, *frontRight, *shooter, *climber;
+	CanTalonSRX *rearLeft, *frontLeft, *rearRight, *frontRight, *shooter, *climber;
 	Encoder *robotDistance;
 	double leftWheels;
 	double rightWheels;
-	double halfSpeed;
 
 	double encoderRate;
 
 	// Shooter's ON/OFF
 	bool spinWheel;
+	bool backspinWheel;
 
 	// Climber
 	bool climberForwardSpin;
@@ -71,19 +72,19 @@ private:
 	{
 		CameraServer::GetInstance()->StartAutomaticCapture();
 		//Declaring sparks for drive code
-		frontLeft = new Spark(0);
-		rearLeft = new Spark(1);
+		frontLeft = new CanTalonSRX(0);
+		rearLeft = new CanTalonSRX(1);
 
-		rearRight = new Spark(2);
-		frontRight = new Spark(3);
+		rearRight = new CanTalonSRX(2);
+		frontRight = new CanTalonSRX(3);
 
 		// Declaring sparks for shooter
-		shooter = new Spark(4);
+		shooter = new CanTalonSRX(4);
 
 		// Decalaring sparks for climber
-		climber = new Spark(5);
+		climber = new CanTalonSRX(5);
 
-		robotDistance = new Encoder(1,2,false, Encoder::EncodingType::k4X);
+		robotDistance = new Encoder(1,2,false, Encoder::EncodingType::k1X);
 //		robotDistance ->E
 		robotDistance -> SetDistancePerPulse(6/*1.884*/);
 		robotDistance->SetMaxPeriod(6);
@@ -195,25 +196,6 @@ private:
 		//if(humanInput == "l","L")
 		if(leftMode)
 		{
-			/*switch(revolutions)
-		{
-			case (revolutions< 13.194689):
-				myDrive -> ArcadeDrive(0.5,0.0);
-				break;
-			case(revolutions >= 13.194689 && revolutions <= 25.855307):
-					angleMeasurement = gyro->GetAngle();
-					if(angleMeasurement >27)
-						{
-							myDrive->ArcadeDrive(0.5,0.0);
-						}
-					else
-						{
-							myDrive->ArcadeDrive(0.0,0.5);
-						}
-					break;
-			default:
-				myDrive->ArcadeDrive(0.0,0.0);
-				break;*/
 			// Encoder gets value
 			revolutions = robotDistance -> GetDistance();
 			encoderRate = robotDistance -> GetRate();
@@ -227,16 +209,16 @@ private:
 			}
 			else if (revolutions >= 13.194689 && revolutions <= 25.855307)
 			{
-				angleMeasurement = gyro->GetAngle();
-				
+				//turns 30 degrees right
+
+				myDrive->ArcadeDrive(0.0,0.5);
+				//don't use wait in loop. It thinks motors are off.
+
 				if(angleMeasurement >27)
 				{
 					myDrive->ArcadeDrive(0.5,0.0);
 				}
-				else
-				{
-					myDrive->ArcadeDrive(0.0,0.5);
-				}
+
 			}
 			else
 			{
@@ -380,25 +362,23 @@ private:
 		{
 			rightWheels = rightWheels*rightWheels;
 		}
-		halfSpeed = stick1 -> GetRawAxis(6);
-
-		if(halfSpeed > 0.4)
-		{
-			leftWheels = leftWheels/2;
-			rightWheels = rightWheels/2;
-		}
 
 		frontLeft -> Set(-leftWheels);
 		frontRight -> Set(rightWheels);
 		rearLeft -> Set(-leftWheels);
+
 		rearRight -> Set(rightWheels);
 
 		//SHOOTER CODE
 		spinWheel = stick1 -> GetRawButton(1);//Assigned to A button
+		backspinWheel = stick1 -> GetRawButton(4);
 
 		if (spinWheel)
 		{
-			shooter->Set(-0.7);// 70% power backwards(motor was mounted backwards)
+			shooter->Set(-0.9);// 70% power backwards(motor was mounted backwards)
+		}
+		else if (backspinWheel){
+			shooter->Set(0.4);
 		}
 		else
 		{
